@@ -45,6 +45,10 @@ Access the web interface at: http://localhost:5000
 - `POST /predict` - Accepts image file and returns classification results
 - `GET /` - Serves the web interface
 
+### Frontend:
+![image](https://github.com/user-attachments/assets/b2b1d707-f67c-4685-a9a7-289780b6dc63)
+
+
 ## 📊 Model Performance
 
 | Metric        | Model 1 (Basic) | Model 2 (Enhanced) |
