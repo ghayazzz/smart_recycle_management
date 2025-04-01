@@ -1,4 +1,4 @@
-# 🗑️ Waste Classification System
+# 🗑️ Waste Classification System using ResNet
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![PyTorch](https://img.shields.io/badge/PyTorch-1.10%2B-orange)
