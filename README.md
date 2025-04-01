@@ -58,6 +58,8 @@ Access the web interface at: http://localhost:5000
 
 ![image](https://github.com/user-attachments/assets/ded3483f-7dc1-4501-8f8f-ba96d45da041)
 
+### Jupyter Notebook
+Choose trashnet_classifier/trashnet_updated.ipynb for easy reading
 
 ## 📊 Model Performance
 
