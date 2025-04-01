@@ -42,7 +42,7 @@ python app.py
 Access the web interface at: http://localhost:5000
 
 ### API Endpoints:
-- `POST /predict` - Accepts image file and returns classification results
+- `POST /classify` - Accepts image file and returns classification results
 - `GET /` - Serves the web interface
 
 ### Frontend:
