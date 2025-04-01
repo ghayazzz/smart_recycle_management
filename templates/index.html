@@ -129,7 +129,7 @@
                 error: null,
                 result: null,
                 dragover: false,
-                apiUrl: 'http://localhost:5000/classify', // Update with your backend URL
+                apiUrl: 'http://localhost:5000/classify',
                 
                 handleFileChange() {
                     const file = this.$refs.fileInput.files[0];
@@ -143,7 +143,7 @@
                 },
                 
                 processFile(file) {
-                    // Validate file type
+                    //Validating file type
                     if (!file.type.match('image.*')) {
                         this.error = 'Please upload an image file';
                         return;
@@ -153,10 +153,10 @@
                     this.result = null;
                     this.imageFile = file;
                     
-                    // Display preview
+                    //Displaying preview
                     this.imageUrl = URL.createObjectURL(file);
                     
-                    // Auto submit for classification
+                    //Auto submitting for classification
                     this.classifyImage();
                 },
                 
@@ -200,7 +200,7 @@
                 },
                 
                 formatClassName(name) {
-                    // Capitalize first letter of each word
+                    //Capitalizing first letter of each word
                     return name.replace(/\b\w/g, char => char.toUpperCase());
                 }
             }
