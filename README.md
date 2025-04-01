@@ -75,17 +75,17 @@ Access the web interface at: http://localhost:5000
 
 ```
 waste-classifier/
-├── backend                 #Flask application
+├── backend                       #Flask application
 │    └── app.py
 ├── dataset/
 │   ├── trashnet
 │   └── trashnet.zip
 ├── models/
 │   ├── non_cw_best_model.pth    #Basic model weights
-│   └── best_model.pth    #Enhanced model weights
+│   └── best_model.pth           #Enhanced model weights
 ├── templates/
-│   └── index.html         #Web interface
-└── README.md              #This file
+│   └── index.html               #Web interface
+└── README.md                    #This file
 ```
 
 ## 🤝 Contributing
