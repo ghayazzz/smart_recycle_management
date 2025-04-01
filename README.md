@@ -75,7 +75,7 @@ Access the web interface at: http://localhost:5000
 
 ```
 waste-classifier/
-├── backend                       #Flask application
+├── backend                      #Flask application
 │    └── app.py
 ├── dataset/
 │   ├── trashnet
