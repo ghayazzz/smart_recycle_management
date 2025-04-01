@@ -81,8 +81,8 @@ waste-classifier/
 │   ├── trashnet
 │   └── trashnet.zip
 ├── models/
-│   ├── cw_best_model.pth    #Basic model weights
-│   └── non_cw_best_model.pth    #Enhanced model weights
+│   ├── non_cw_best_model.pth    #Basic model weights
+│   └── best_model.pth    #Enhanced model weights
 ├── templates/
 │   └── index.html         #Web interface
 └── README.md              #This file
