@@ -29,8 +29,8 @@ A deep learning system that classifies waste materials into 6 categories (cardbo
    ```
 
 2. Download pre-trained models:
-   - [Model 1 (Basic)](https://www.github.com/model1.pth) → Save to `models/non_cw_best_model.pth`
-   - [Model 2 (Enhanced)](https://www.github.com/model2.pth) → Save to `models/cw_best_model.pth`
+   - [Model 1 (Basic)](https://github.com/ghayazzz/smart_recycle_management/blob/main/models/non_cw_best_model.pth) → Save to `models/non_cw_best_model.pth`
+   - [Model 2 (Enhanced)](https://github.com/ghayazzz/smart_recycle_management/blob/main/models/cw_best_model.pth) → Save to `models/cw_best_model.pth`
 
 ## 🚀 Usage
 
