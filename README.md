@@ -30,10 +30,18 @@ A deep learning system that classifies waste materials into 6 categories (cardbo
 
 2. Download pre-trained models:
    - [Model 1 (Basic)](https://github.com/ghayazzz/smart_recycle_management/blob/main/models/non_cw_best_model.pth) → Save to `models/non_cw_best_model.pth`
-   - [Model 2 (Enhanced)](https://github.com/ghayazzz/smart_recycle_management/blob/main/models/cw_best_model.pth) → Save to `models/cw_best_model.pth`
+   - [Model 2 (Enhanced)](https://github.com/ghayazzz/smart_recycle_management/blob/main/models/best_model.pth) → Save to `models/best_model.pth`
 
 ## 🚀 Usage
-
+Keep best_model.pth (in models), app.py (in backend), and index.html (in templates) in the same folder and follow the below instructions:
+### Installing required libraries
+```bash
+pip install torch torchvision flask flask-cors pillow
+```
+or 
+```bash
+pip3 install torch torchvision flask flask-cors pillow
+```
 ### Running the Flask API:
 ```bash
 python app.py
