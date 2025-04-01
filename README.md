@@ -47,7 +47,7 @@ Access the web interface at: http://localhost:5000
 
 ### Frontend:
 ![image](https://github.com/user-attachments/assets/7c2cc946-ef49-4c13-9957-e1aa0a64957f)
-
+![image](https://github.com/user-attachments/assets/059bc0c3-1c8c-4014-9215-dda99a2a2d02)
 
 
 ## 📊 Model Performance
