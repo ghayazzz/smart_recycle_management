@@ -100,4 +100,4 @@ Project Maintainer - [Mohammed Ghayasuddin](mailto:mghayasuddin2000@gmail.com)
 
 ---
 
-Made with ♥ by [Mohammed Ghayasuddin]
+Made with ♥ by Mohammed Ghayasuddin
