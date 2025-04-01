@@ -1,80 +1,103 @@
-from flask import Flask, request, jsonify, render_template
-import torch
-from torchvision import transforms
-from PIL import Image
 import os
-import uuid
+import torch
+import torchvision.transforms as transforms
+import torchvision.models as models
+from PIL import Image
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)  # To allow cross-origin requests
 
-# Load models (adjust paths as needed)
-MODEL1_PATH = "./models/non_cw_best_model.pth"
-MODEL2_PATH = "./models/cw_best_model.pth"
+# Define the class labels for TrashNet
+CLASSES = ['cardboard', 'glass', 'metal', 'paper', 'plastic', 'trash']
 
-# Define class names
-CLASS_NAMES = ['cardboard', 'glass', 'metal', 'paper', 'plastic', 'trash']
-
-# Image transformations
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
-
-def load_model(model_path):
-    model = torch.load(model_path, map_location=torch.device('cpu'))
+# Load the pre-trained model
+def load_model():
+    # Initialize ResNet18 model with the number of classes in TrashNet
+    # Change from ResNet50 to ResNet18 based on your model architecture
+    model = models.resnet18(weights=None)
+    num_ftrs = model.fc.in_features
+    model.fc = torch.nn.Linear(num_ftrs, len(CLASSES))
+    
+    # Load the trained weights - using your specific model filename
+    checkpoint = torch.load('best_model.pth', map_location=torch.device('cpu'))
+    
+    # If the checkpoint contains the full model rather than just state_dict
+    if not isinstance(checkpoint, dict) or 'state_dict' in checkpoint:
+        if 'state_dict' in checkpoint:
+            model.load_state_dict(checkpoint['state_dict'])
+        else:
+            model = checkpoint  # The checkpoint is the full model
+    else:
+        model.load_state_dict(checkpoint)
+    
     model.eval()
     return model
 
-model1 = load_model(MODEL1_PATH)
-model2 = load_model(MODEL2_PATH)
+# Initialize model
+try:
+    model = load_model()
+    print("Model loaded successfully!")
+except Exception as e:
+    print(f"Error loading model: {str(e)}")
+    # For development purposes, we'll set a placeholder model
+    # In production, you might want to exit the application
+    model = None
 
-@app.route("/")
-def home():
-    return render_template("index.html")
+# Define the transformation for input images (same as used during training)
+transform = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+])
 
-@app.route("/predict", methods=["POST"])
-def predict():
-    if "file" not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
+@app.route('/classify', methods=['POST'])
+def classify_image():
+    if model is None:
+        return jsonify({'error': 'Model failed to load. Please check server logs.'})
+        
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'})
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'})
+    
+    try:
+        # Open and preprocess the image
+        img = Image.open(file).convert('RGB')
+        img_tensor = transform(img).unsqueeze(0)  # Add batch dimension
+        
+        # Perform inference
+        with torch.no_grad():
+            outputs = model(img_tensor)
+            _, predicted = torch.max(outputs, 1)
+            
+            # Get probabilities using softmax
+            probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
+            
+            # Create result dictionary
+            result = {
+                'predicted_class': CLASSES[predicted.item()],
+                'confidence': float(probabilities[predicted].item()),
+                'all_probabilities': {
+                    class_name: float(probabilities[i].item()) 
+                    for i, class_name in enumerate(CLASSES)
+                }
+            }
+            
+        return jsonify(result)
+    
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"error": "Empty filename"}), 400
+@app.route('/health', methods=['GET'])
+def health_check():
+    if model is None:
+        return jsonify({'status': 'unhealthy', 'reason': 'Model failed to load'})
+    return jsonify({'status': 'healthy'})
 
-    # Save uploaded image
-    filename = str(uuid.uuid4()) + ".jpg"
-    upload_path = os.path.join("static", "uploads", filename)
-    file.save(upload_path)
-
-    # Preprocess image
-    img = Image.open(upload_path).convert("RGB")
-    img_tensor = transform(img).unsqueeze(0)
-
-    # Get predictions from both models
-    with torch.no_grad():
-        output1 = model1(img_tensor)
-        output2 = model2(img_tensor)
-        probs1 = torch.nn.functional.softmax(output1, dim=1)[0] * 100
-        probs2 = torch.nn.functional.softmax(output2, dim=1)[0] * 100
-
-    # Format results
-    results = {
-        "image_url": f"/static/uploads/{filename}",
-        "model1": {
-            "prediction": CLASS_NAMES[torch.argmax(output1).item()],
-            "confidence": round(torch.max(probs1).item(), 2),
-            "all_probs": {cls: round(prob.item(), 2) for cls, prob in zip(CLASS_NAMES, probs1)}
-        },
-        "model2": {
-            "prediction": CLASS_NAMES[torch.argmax(output2).item()],
-            "confidence": round(torch.max(probs2).item(), 2),
-            "all_probs": {cls: round(prob.item(), 2) for cls, prob in zip(CLASS_NAMES, probs2)}
-        }
-    }
-
-    return jsonify(results)
-
-if __name__ == "__main__":
-    os.makedirs(os.path.join("static", "uploads"), exist_ok=True)
-    app.run(debug=True)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)

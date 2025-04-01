@@ -3,101 +3,208 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Waste Classifier</title>
+    <title>TrashNet Classifier</title>
+    
+    <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Alpine.js via CDN -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="stylesheet" href="/static/css/styles.css">
+    
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
-<body class="bg-gray-100">
-    <div class="container mx-auto p-4" x-data="app()">
-        <h1 class="text-3xl font-bold text-center my-6">Waste Classification</h1>
-        
-        <!-- Upload Section -->
-        <div class="bg-white p-6 rounded-lg shadow-md mb-6">
-            <input type="file" @change="handleFileUpload" class="hidden" id="fileInput" accept="image/*">
-            <label for="fileInput" class="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600">
-                Upload Image
-            </label>
-            <div x-show="imageUrl" class="mt-4">
-                <img :src="imageUrl" alt="Uploaded Image" class="max-w-full h-64 mx-auto rounded-lg">
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8" x-data="imageClassifier()">
+        <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+            <!-- Header -->
+            <div class="bg-green-600 text-white p-6">
+                <h1 class="text-3xl font-bold">TrashNet Classifier</h1>
+                <p class="mt-2">Upload an image to classify waste into cardboard, glass, metal, paper, plastic, or trash</p>
+            </div>
+            
+            <!-- Upload Area -->
+            <div class="p-6">
+                <div 
+                    class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:bg-gray-50 transition"
+                    @click="$refs.fileInput.click()"
+                    :class="{'border-green-500': dragover}"
+                    @dragover.prevent="dragover = true"
+                    @dragleave.prevent="dragover = false"
+                    @drop.prevent="handleDrop($event)"
+                >
+                    <input 
+                        type="file" 
+                        accept="image/*" 
+                        class="hidden" 
+                        x-ref="fileInput" 
+                        @change="handleFileChange"
+                    >
+                    
+                    <template x-if="!imageUrl && !isLoading">
+                        <div>
+                            <svg class="w-16 h-16 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p class="mt-4 text-lg font-medium text-gray-700">Drag and drop an image here, or click to select</p>
+                            <p class="mt-2 text-sm text-gray-500">Supports JPG, PNG, GIF</p>
+                        </div>
+                    </template>
+                    
+                    <template x-if="isLoading">
+                        <div class="text-center">
+                            <svg class="w-16 h-16 mx-auto text-green-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            <p class="mt-4 text-lg font-medium text-gray-700">Processing...</p>
+                        </div>
+                    </template>
+                    
+                    <template x-if="imageUrl && !isLoading">
+                        <div>
+                            <img :src="imageUrl" class="mx-auto max-h-64 rounded shadow">
+                            <p class="mt-4 text-sm text-gray-500">Click or drag to upload a different image</p>
+                        </div>
+                    </template>
+                </div>
+                
+                <!-- Error Message -->
+                <div class="mt-4 text-red-500 text-center" x-show="error" x-text="error"></div>
+                
+                <!-- Results Section -->
+                <div class="mt-8" x-show="result" x-cloak>
+                    <div class="bg-gray-50 rounded-lg p-6 border border-gray-200">
+                        <h2 class="text-2xl font-bold text-gray-800">Classification Result</h2>
+                        
+                        <div class="mt-4">
+                            <div class="flex items-center">
+                                <div class="text-lg font-medium" x-text="'This appears to be: ' + formatClassName(result.predicted_class)"></div>
+                                <div class="ml-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm" x-text="(result.confidence * 100).toFixed(1) + '%'"></div>
+                            </div>
+                            
+                            <div class="mt-6">
+                                <h3 class="text-lg font-medium text-gray-700 mb-3">Probability Distribution:</h3>
+                                <div class="space-y-3">
+                                    <template x-for="(prob, className) in result.all_probabilities" :key="className">
+                                        <div>
+                                            <div class="flex justify-between mb-1">
+                                                <span class="text-sm font-medium text-gray-700" x-text="formatClassName(className)"></span>
+                                                <span class="text-sm font-medium text-gray-700" x-text="(prob * 100).toFixed(1) + '%'"></span>
+                                            </div>
+                                            <div class="w-full bg-gray-200 rounded-full h-2.5">
+                                                <div class="bg-green-600 h-2.5 rounded-full" :style="'width: ' + (prob * 100) + '%'"></div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Reset Button -->
+                <div class="mt-6 text-center" x-show="result || error">
+                    <button 
+                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition"
+                        @click="resetForm"
+                    >
+                        Reset
+                    </button>
+                </div>
             </div>
         </div>
-
-        <!-- Results Section -->
-        <div x-show="results" class="bg-white p-6 rounded-lg shadow-md">
-            <h2 class="text-xl font-semibold mb-4">Results</h2>
-            
-            <!-- Model 1 Results -->
-            <div class="mb-6">
-                <h3 class="text-lg font-medium">Model 1 (Basic)</h3>
-                <p>Prediction: <span class="font-bold" x-text="results.model1.prediction"></span></p>
-                <p>Confidence: <span x-text="results.model1.confidence + '%'"></span></p>
-                
-                <!-- Confidence Bars -->
-                <div class="mt-2 space-y-2">
-                    <template x-for="(prob, cls) in results.model1.all_probs" :key="cls">
-                        <div>
-                            <span x-text="cls" class="w-24 inline-block"></span>
-                            <div class="w-full bg-gray-200 rounded-full h-4">
-                                <div class="bg-blue-500 h-4 rounded-full" :style="'width: ' + prob + '%'"></div>
-                            </div>
-                            <span x-text="prob + '%'" class="ml-2"></span>
-                        </div>
-                    </template>
-                </div>
-            </div>
-
-            <!-- Model 2 Results -->
-            <div>
-                <h3 class="text-lg font-medium">Model 2 (Enhanced)</h3>
-                <p>Prediction: <span class="font-bold" x-text="results.model2.prediction"></span></p>
-                <p>Confidence: <span x-text="results.model2.confidence + '%'"></span></p>
-                
-                <!-- Confidence Bars -->
-                <div class="mt-2 space-y-2">
-                    <template x-for="(prob, cls) in results.model2.all_probs" :key="cls">
-                        <div>
-                            <span x-text="cls" class="w-24 inline-block"></span>
-                            <div class="w-full bg-gray-200 rounded-full h-4">
-                                <div class="bg-green-500 h-4 rounded-full" :style="'width: ' + prob + '%'"></div>
-                            </div>
-                            <span x-text="prob + '%'" class="ml-2"></span>
-                        </div>
-                    </template>
-                </div>
-            </div>
+        
+        <div class="mt-8 text-center text-gray-500 text-sm">
+            <p>Powered by ResNet | TrashNet Dataset | Alpine.js & Tailwind CSS</p>
         </div>
     </div>
 
     <script>
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('app', () => ({
+        function imageClassifier() {
+            return {
                 imageUrl: null,
-                results: null,
+                imageFile: null,
                 isLoading: false,
-
-                handleFileUpload(e) {
-                    const file = e.target.files[0];
-                    if (!file) return;
-
+                error: null,
+                result: null,
+                dragover: false,
+                apiUrl: 'http://localhost:5000/classify', // Update with your backend URL
+                
+                handleFileChange() {
+                    const file = this.$refs.fileInput.files[0];
+                    if (file) this.processFile(file);
+                },
+                
+                handleDrop(e) {
+                    this.dragover = false;
+                    const file = e.dataTransfer.files[0];
+                    if (file) this.processFile(file);
+                },
+                
+                processFile(file) {
+                    // Validate file type
+                    if (!file.type.match('image.*')) {
+                        this.error = 'Please upload an image file';
+                        return;
+                    }
+                    
+                    this.error = null;
+                    this.result = null;
+                    this.imageFile = file;
+                    
+                    // Display preview
+                    this.imageUrl = URL.createObjectURL(file);
+                    
+                    // Auto submit for classification
+                    this.classifyImage();
+                },
+                
+                async classifyImage() {
+                    if (!this.imageFile) return;
+                    
                     this.isLoading = true;
-                    const formData = new FormData();
-                    formData.append('file', file);
-
-                    fetch('/predict', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        this.imageUrl = data.image_url;
-                        this.results = data;
-                    })
-                    .catch(err => console.error(err))
-                    .finally(() => this.isLoading = false);
+                    
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', this.imageFile);
+                        
+                        const response = await fetch(this.apiUrl, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error('Server error: ' + response.status);
+                        }
+                        
+                        this.result = await response.json();
+                        
+                        if (this.result.error) {
+                            throw new Error(this.result.error);
+                        }
+                    } catch (err) {
+                        this.error = 'Error: ' + err.message;
+                        this.result = null;
+                    } finally {
+                        this.isLoading = false;
+                    }
+                },
+                
+                resetForm() {
+                    this.imageUrl = null;
+                    this.imageFile = null;
+                    this.error = null;
+                    this.result = null;
+                    this.$refs.fileInput.value = '';
+                },
+                
+                formatClassName(name) {
+                    // Capitalize first letter of each word
+                    return name.replace(/\b\w/g, char => char.toUpperCase());
                 }
-            }))
-        })
+            }
+        }
     </script>
 </body>
 </html>
