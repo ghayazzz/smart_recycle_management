@@ -54,9 +54,8 @@ Access the web interface at: http://localhost:5000
 - `GET /` - Serves the web interface
 
 ### Frontend:
-![image](https://github.com/user-attachments/assets/02878c7a-061d-432e-a953-a5e58234a077)
+![image](https://github.com/user-attachments/assets/45076122-316e-44f4-a354-55d1118b52dd)
 
-![image](https://github.com/user-attachments/assets/ded3483f-7dc1-4501-8f8f-ba96d45da041)
 
 ### Jupyter Notebook
 Choose trashnet_classifier/trashnet_updated.ipynb for easy reading
